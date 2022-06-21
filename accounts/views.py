@@ -1,25 +1,57 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.template import RequestContext
+
+from accounts.email import newAccount_email
 from .forms import CreateUserForm
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+
 
 
 def loginPage(request):
-    context = {}
-    return render(request, 'accounts/login.html', context)
+    if request.user.is_authenticated:
+        return redirect('home')
+    else:
+        if request.method == "POST":
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('home')
+            else:
+                messages.info(request, "Username OR passord is incorrect")
+                
+        context = {}
+        return render(request, 'accounts/login.html', context)
+
+def logoutUser(request):
+    logout(request)
+    return redirect('login')
+
 
 def registerPage(request):
-    form = CreateUserForm()
+    if request.user.is_authenticated:
+        return redirect('home')
+    else:
+        form = CreateUserForm()
+        if request.method == "POST":
+            form = CreateUserForm(request.POST)
+            if form.is_valid():
+                form.save()
+                user = form.cleaned_data.get('username')
+                email = form.cleaned_data.get('email')
+                messages.success(request, "Account successfuly created for " + user)
+                newAccount_email(email)
+                return redirect("login")
 
-    if request.method == "POST":
-        form = CreateUserForm(request.POST)
-        if form.is_valid():
-            form.save()
-            user = form.cleaned_data.get()
-            messages.success(request, "Account successfuly created for " + user)
+        context = {'form':form}
+        return render(request, 'accounts/register.html', context)
 
-            return redirect("login")
-
-    context = {'form':form}
-    return render(request, 'accounts/register.html', context)
+@login_required(login_url='login')
+def homePage(request):
+    context = {}
+    return render(request, 'main/home.html', context)
