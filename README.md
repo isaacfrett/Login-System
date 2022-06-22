@@ -9,6 +9,7 @@ The register and login sites use a previous styling template in javascript but t
 
 Below are some screenshots of each page for register, login, and the homepage.
 
+
 ![alt text](https://imgur.com/s5JlDBz.png)
 
 ![alt text](https://imgur.com/xUlIG6r.png)
